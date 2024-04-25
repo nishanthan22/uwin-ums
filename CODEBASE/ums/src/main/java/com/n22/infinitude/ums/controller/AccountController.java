@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.google.gson.JsonObject;
-import com.n22.infinitude.ums.ahelper.AccountHelper;
 import com.n22.infinitude.ums.constants.AppConstants;
+import com.n22.infinitude.ums.helper.AccountHelper;
 
 @RestController 
 @RequestMapping("uwindsor")
@@ -51,24 +51,52 @@ public class AccountController {
     "degree": "Graduate"
 	 }*/
 	@PostMapping("register/student")
-	public String registerStudent(@RequestParam(name = "params", required = false) HashMap<String, String> requestParams,
+	public JsonObject registerStudent(@RequestParam(name = "params", required = false) HashMap<String, String> requestParams,
 			@RequestHeader(required = false) HashMap<String, String> requestHeaders, @RequestBody HashMap<String, String> requestBody) {
 		
-		LOGGER.info("REQUEST_HEADERS: {}, REQUEST_PARAMS: {}, REQUEST_BODY: {}", requestParams, requestHeaders, requestBody);
+		LOGGER.info("REQUEST_PARAMS: {}, REQUEST_HEADERS: {}, REQUEST_BODY: {}", requestParams, requestHeaders, requestBody);
+		
+		JsonObject userDetails = new JsonObject();
+		if(requestBody == null || requestBody.isEmpty()) {
+			userDetails.addProperty(AppConstants.STATUS_CODE, HttpStatus.BAD_REQUEST.value());
+			userDetails.addProperty(AppConstants.STATUS, AppConstants.FAILED);
+			userDetails.addProperty(AppConstants.RESPONSE_MESSAGE, HttpStatus.BAD_REQUEST.name());
+			
+		} else {
 		
 		HashMap<String, String> emailContents = new HashMap<>();
 		if (!requestBody.get(AppConstants.MIDDLE_NAME).isBlank()
 				&& !requestBody.get(AppConstants.MIDDLE_NAME).equalsIgnoreCase(AppConstants.NA)) {
-			emailContents.put(AppConstants.EMAIL_ADDRESS, requestBody.get(AppConstants.MIDDLE_NAME));
+			emailContents.put(AppConstants.MAILBOX_NAME, requestBody.get(AppConstants.MIDDLE_NAME));
 		} else if (!requestBody.get(AppConstants.LAST_NAME).isBlank()) {
-			emailContents.put(AppConstants.EMAIL_ADDRESS, requestBody.get(AppConstants.LAST_NAME));
+			emailContents.put(AppConstants.MAILBOX_NAME, requestBody.get(AppConstants.LAST_NAME));
 		}
 
 		emailContents.put(AppConstants.DOB, requestBody.get(AppConstants.DOB));
+		String userName = "";
+		String emailAddress = accountHelper.generateEmailAddress(emailContents);
+		if(!emailAddress.isBlank()) {
+			int delimeterIndex = emailAddress.indexOf("@");
+			userName = emailAddress.substring(0, delimeterIndex);
+		} 
+		
+		if(!emailAddress.isBlank() && !userName.isBlank()) {
+			userDetails.addProperty(AppConstants.STATUS_CODE, HttpStatus.OK.value());
+			userDetails.addProperty(AppConstants.STATUS, AppConstants.SUCCESS);
+			userDetails.addProperty(AppConstants.RESPONSE_MESSAGE, HttpStatus.OK.name());
+			userDetails.addProperty(AppConstants.EMAIL_ADDRESS, emailAddress);
+			userDetails.addProperty(AppConstants.USER_NAME, userName);
+			userDetails.addProperty(AppConstants.PASSWORD, AppConstants.DUMMY_PASSWORD);
+		}else {
+			userDetails.addProperty(AppConstants.STATUS_CODE, HttpStatus.INTERNAL_SERVER_ERROR.value());
+			userDetails.addProperty(AppConstants.STATUS, AppConstants.FAILED);
+			userDetails.addProperty(AppConstants.RESPONSE_MESSAGE, HttpStatus.INTERNAL_SERVER_ERROR.name());
+		}}
+			
+		LOGGER.info("RESPONSE: {}", userDetails);
+		
 
-		String test = accountHelper.generateEmailAddress(emailContents);
-
-		return test;
+		return userDetails;
 	}
 	
 
