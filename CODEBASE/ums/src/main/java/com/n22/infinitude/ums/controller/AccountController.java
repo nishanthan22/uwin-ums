@@ -2,6 +2,8 @@ package com.n22.infinitude.ums.controller;
 
 import java.util.HashMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,6 +21,8 @@ import com.n22.infinitude.ums.constants.AppConstants;
 @RestController 
 @RequestMapping("uwindsor")
 public class AccountController {
+	
+	private static final Logger LOGGER = LoggerFactory.getLogger(AccountController.class);
 	
 	@Autowired
 	AccountHelper accountHelper;
@@ -47,18 +51,20 @@ public class AccountController {
     "degree": "Graduate"
 	 }*/
 	@PostMapping("register/student")
-	public String registerStudent(@RequestParam(name = "params", required = false) HashMap<String, String> params,
-			@RequestHeader(required = false) HashMap<String, String> headers, @RequestBody HashMap<String, String> body) {
-
+	public String registerStudent(@RequestParam(name = "params", required = false) HashMap<String, String> requestParams,
+			@RequestHeader(required = false) HashMap<String, String> requestHeaders, @RequestBody HashMap<String, String> requestBody) {
+		
+		LOGGER.info("REQUEST_HEADERS: {}, REQUEST_PARAMS: {}, REQUEST_BODY: {}", requestParams, requestHeaders, requestBody);
+		
 		HashMap<String, String> emailContents = new HashMap<>();
-		if (!body.get(AppConstants.MIDDLE_NAME).isBlank()
-				&& !body.get(AppConstants.MIDDLE_NAME).equalsIgnoreCase(AppConstants.NA)) {
-			emailContents.put(AppConstants.EMAIL_ADDRESS, body.get(AppConstants.MIDDLE_NAME));
-		} else if (!body.get(AppConstants.LAST_NAME).isBlank()) {
-			emailContents.put(AppConstants.EMAIL_ADDRESS, body.get(AppConstants.LAST_NAME));
+		if (!requestBody.get(AppConstants.MIDDLE_NAME).isBlank()
+				&& !requestBody.get(AppConstants.MIDDLE_NAME).equalsIgnoreCase(AppConstants.NA)) {
+			emailContents.put(AppConstants.EMAIL_ADDRESS, requestBody.get(AppConstants.MIDDLE_NAME));
+		} else if (!requestBody.get(AppConstants.LAST_NAME).isBlank()) {
+			emailContents.put(AppConstants.EMAIL_ADDRESS, requestBody.get(AppConstants.LAST_NAME));
 		}
 
-		emailContents.put(AppConstants.DOB, body.get(AppConstants.DOB));
+		emailContents.put(AppConstants.DOB, requestBody.get(AppConstants.DOB));
 
 		String test = accountHelper.generateEmailAddress(emailContents);
 
